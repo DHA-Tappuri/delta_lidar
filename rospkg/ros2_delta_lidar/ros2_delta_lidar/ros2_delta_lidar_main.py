@@ -21,12 +21,18 @@ class ros2_delta_lidar(Node):
         # declare parameter
 
         # moving object detection
-        self.declare_parameter( 'port', '/dev/ttyUSB0')
-        self.declare_parameter( 'baud', 115200)
+        self.declare_parameter( 'port',     '/dev/ttyUSB0' )
+        self.declare_parameter( 'baud',     115200         )
+        self.declare_parameter( 'frame_id', 'laser'        )
+        self.declare_parameter( 'min_dist', 0.0            )
+        self.declare_parameter( 'max_dist', 8.0            )
 
         # read parameter
-        self._port = self.get_parameter('port').value
-        self._baud = int(self.get_parameter('baud').value)
+        self._port     = self.get_parameter('port').value
+        self._baud     = int(self.get_parameter('baud').value)
+        self._frame_id = self.get_parameter('frame_id').value
+        self._min_dist = float(self.get_parameter('min_dist').value)
+        self._max_dist = float(self.get_parameter('max_dist').value)
 
         # initialize delta 2G
         self._lidar = delta_lidar( port=self._port, baud=self._baud, use_ctrl=True )
@@ -41,14 +47,14 @@ class ros2_delta_lidar(Node):
     def _callback_scan( self, data ):
         msg = LaserScan()
         msg.header.stamp    = Clock().now().to_msg()
-        msg.header.frame_id = 'laser'
+        msg.header.frame_id = self._frame_id
 
         msg.angle_min       = -3.141592
         msg.angle_max       =  3.141592
         msg.angle_increment = -(msg.angle_max - msg.angle_min) / len(data._range)
 
-        msg.range_min       = 0.0
-        msg.range_max       = 8.0
+        msg.range_min       = self._min_dist
+        msg.range_max       = self._max_dist
         msg.ranges          = data._range
         msg.intensities     = data._rssi
 
